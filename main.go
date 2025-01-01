@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -430,56 +431,62 @@ func gateio_handler() {
 						market := strings.ToLower(strings.ReplaceAll(k, "_", ""))
 						go cancel_orders(market)
 
-						for _, o := range v.Bids {
-							log.Info("Placing new order", "market", market, "side", "sell", "volume", o[1], "price", o[0])
-							new_order, err := exchange.Msamex_order(market, "sell", o[1], o[0])
-							if err == nil {
-								database.DB.Create(&database.Order{
-									Exchange:   "gateio",
-									Market:     market,
-									Side:       "sell",
-									Volume:     o[1],
-									Price:      o[0],
-									MsamexID:   new_order.Uid,
-									MsamexUUID: new_order.Uuid,
+						max_length := int(math.Max(float64(len(v.Bids)), float64(len(v.Asks))))
+
+						for i := 0; i < max_length; i++ {
+							if i < len(v.Bids) {
+								o := v.Bids[i]
+								log.Info("Placing new order", "market", market, "side", "sell", "volume", o[1], "price", o[0])
+								new_order, err := exchange.Msamex_order(market, "sell", o[1], o[0])
+								if err == nil {
+									database.DB.Create(&database.Order{
+										Exchange:   "gateio",
+										Market:     market,
+										Side:       "sell",
+										Volume:     o[1],
+										Price:      o[0],
+										MsamexID:   new_order.Uid,
+										MsamexUUID: new_order.Uuid,
+									})
+								} else {
+									log.Error(err.Error())
+								}
+
+								database.DB.Create(&database.Last{
+									Exchange: "gateio",
+									Market:   market,
+									Side:     "sell",
+									Volume:   o[1],
+									Price:    o[0],
 								})
-							} else {
-								log.Error(err.Error())
 							}
 
-							database.DB.Create(&database.Last{
-								Exchange: "gateio",
-								Market:   market,
-								Side:     "sell",
-								Volume:   o[1],
-								Price:    o[0],
-							})
-						}
+							if i < len(v.Asks) {
+								o := v.Asks[i]
+								log.Info("Placing new order", "market", market, "side", "buy", "volume", o[1], "price", o[0])
+								new_order, err := exchange.Msamex_order(market, "buy", o[1], o[0])
+								if err == nil {
+									database.DB.Create(&database.Order{
+										Exchange:   "gateio",
+										Market:     market,
+										Side:       "buy",
+										Volume:     o[1],
+										Price:      o[0],
+										MsamexID:   new_order.Uid,
+										MsamexUUID: new_order.Uuid,
+									})
+								} else {
+									log.Error(err.Error())
+								}
 
-						for _, o := range v.Asks {
-							log.Info("Placing new order", "market", market, "side", "buy", "volume", o[1], "price", o[0])
-							new_order, err := exchange.Msamex_order(market, "buy", o[1], o[0])
-							if err == nil {
-								database.DB.Create(&database.Order{
-									Exchange:   "gateio",
-									Market:     market,
-									Side:       "buy",
-									Volume:     o[1],
-									Price:      o[0],
-									MsamexID:   new_order.Uid,
-									MsamexUUID: new_order.Uuid,
+								database.DB.Create(&database.Last{
+									Exchange: "gateio",
+									Market:   market,
+									Side:     "buy",
+									Volume:   o[1],
+									Price:    o[0],
 								})
-							} else {
-								log.Error(err.Error())
 							}
-
-							database.DB.Create(&database.Last{
-								Exchange: "gateio",
-								Market:   market,
-								Side:     "buy",
-								Volume:   o[1],
-								Price:    o[0],
-							})
 						}
 					}
 					maps.Clear(data_pair)
