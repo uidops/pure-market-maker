@@ -118,7 +118,7 @@ func main() {
 	go func() {
 		for {
 			do_last_order()
-			time.Sleep(5 * time.Second)
+			time.Sleep(15 * time.Second)
 		}
 	}()
 
@@ -429,7 +429,7 @@ func gateio_handler() {
 					database.DB.Where("exchange = ?", "gateio").Unscoped().Delete(&database.Last{})
 					for k, v := range data_pair {
 						market := strings.ToLower(strings.ReplaceAll(k, "_", ""))
-						go cancel_orders(market)
+						cancel_orders(market)
 
 						max_length := int(math.Max(float64(len(v.Bids)), float64(len(v.Asks))))
 
@@ -438,6 +438,7 @@ func gateio_handler() {
 								o := v.Bids[i]
 								log.Info("Placing new order", "market", market, "side", "sell", "volume", o[1], "price", o[0])
 								new_order, err := exchange.Msamex_order(market, "sell", o[1], o[0])
+								time.Sleep(1 * time.Second)
 								if err == nil {
 									database.DB.Create(&database.Order{
 										Exchange:   "gateio",
@@ -465,6 +466,7 @@ func gateio_handler() {
 								o := v.Asks[i]
 								log.Info("Placing new order", "market", market, "side", "buy", "volume", o[1], "price", o[0])
 								new_order, err := exchange.Msamex_order(market, "buy", o[1], o[0])
+								time.Sleep(1 * time.Second)
 								if err == nil {
 									database.DB.Create(&database.Order{
 										Exchange:   "gateio",
