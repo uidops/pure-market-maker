@@ -102,6 +102,8 @@ func (msamex Msamex) Msamex_order(market string, side string, volume float64, pr
 		return MsamexData{}, errors.New(errstr[0].(string))
 	}
 
+	log.Info(response_json)
+
 	uuid, ok := response_json["uuid"].(string)
 	if ok == false {
 		return MsamexData{}, errors.New("There is no uuid")
