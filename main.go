@@ -118,7 +118,7 @@ func main() {
 	go func() {
 		for {
 			do_last_order()
-			time.Sleep(15 * time.Second)
+			time.Sleep(25 * time.Second)
 		}
 	}()
 
