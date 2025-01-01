@@ -194,12 +194,28 @@ func show_panel(setting PanelSetting) {
 
 	lasts := []database.Last{}
 	query := `
-	WITH RankedRows AS (
-		SELECT
-			id, created_at, updated_at, deleted_at, exchange, market, side, volume, price,
-			ROW_NUMBER() OVER (PARTITION BY side ORDER BY price DESC) AS rank
-		FROM lasts WHERE exchange = ? AND market = ?) SELECT * FROM RankedRows WHERE rank <= 10;
-	`
+	WITH RankedRows AS ( SELECT
+	    id,
+	    created_at,
+	    updated_at,
+	    deleted_at,
+	    exchange,
+	    market,
+	    side,
+	    volume,
+	    price,
+		ROW_NUMBER() OVER (
+			PARTITION BY side
+			ORDER BY
+			CASE WHEN side = 'buy' THEN -price
+			ELSE price
+	        END ASC
+		) AS rank FROM lasts
+        WHERE exchange = ? AND market = ?
+        )
+	    SELECT *
+	    FROM RankedRows
+	    WHERE rank <= 10;`
 
 	err = database.DB.Raw(query, setting.Exchange, setting.Market).Scan(&lasts).Error
 
