@@ -438,7 +438,7 @@ func gateio_handler() {
 								o := v.Bids[i]
 								log.Info("Placing new order", "market", market, "side", "sell", "volume", o[1], "price", o[0])
 								new_order, err := exchange.Msamex_order(market, "sell", o[1], o[0])
-								time.Sleep(1 * time.Second)
+								time.Sleep(4 * time.Second)
 								if err == nil {
 									database.DB.Create(&database.Order{
 										Exchange:   "gateio",
@@ -466,7 +466,7 @@ func gateio_handler() {
 								o := v.Asks[i]
 								log.Info("Placing new order", "market", market, "side", "buy", "volume", o[1], "price", o[0])
 								new_order, err := exchange.Msamex_order(market, "buy", o[1], o[0])
-								time.Sleep(1 * time.Second)
+								time.Sleep(4 * time.Second)
 								if err == nil {
 									database.DB.Create(&database.Order{
 										Exchange:   "gateio",
@@ -492,7 +492,7 @@ func gateio_handler() {
 						}
 					}
 					maps.Clear(data_pair)
-					time.Sleep(15 * time.Second)
+					time.Sleep(20 * time.Second)
 				}
 			}
 		}
